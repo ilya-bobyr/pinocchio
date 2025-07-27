@@ -6,6 +6,8 @@ use pinocchio::{
     ProgramResult,
 };
 
+use crate::CanInvoke;
+
 /// Drive state of Uninitialized nonce account to Initialized, setting the nonce value.
 ///
 /// The `Pubkey` parameter specifies the entity authorized to execute nonce
@@ -71,6 +73,39 @@ impl InitializeNonceAccount<'_, '_> {
                 self.rent_sysvar,
             ],
             signers,
+        )
+    }
+}
+
+const ACCOUNTS_LEN: usize = 3;
+
+impl CanInvoke<ACCOUNTS_LEN> for InitializeNonceAccount<'_, '_> {
+    fn invoke_via(
+        &self,
+        invoke: impl FnOnce(
+            /* program_id: */ &Pubkey,
+            /* accounts: */ &[&AccountInfo; ACCOUNTS_LEN],
+            /* account_metas: */ &[AccountMeta],
+            /* data: */ &[u8],
+        ) -> ProgramResult,
+    ) -> ProgramResult {
+        let mut instruction_data = [0; 36];
+        instruction_data[0] = 6;
+        instruction_data[4..36].copy_from_slice(self.authority);
+
+        invoke(
+            &crate::ID,
+            &[
+                self.account,
+                self.recent_blockhashes_sysvar,
+                self.rent_sysvar,
+            ],
+            &[
+                AccountMeta::writable(self.account.key()),
+                AccountMeta::readonly(self.recent_blockhashes_sysvar.key()),
+                AccountMeta::readonly(self.rent_sysvar.key()),
+            ],
+            &instruction_data,
         )
     }
 }

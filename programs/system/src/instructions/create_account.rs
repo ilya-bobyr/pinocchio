@@ -6,6 +6,8 @@ use pinocchio::{
     ProgramResult,
 };
 
+use crate::CanInvoke;
+
 /// Create a new account.
 ///
 /// ### Accounts:
@@ -60,5 +62,34 @@ impl CreateAccount<'_> {
         };
 
         invoke_signed(&instruction, &[self.from, self.to], signers)
+    }
+}
+
+const ACCOUNTS_LEN: usize = 2;
+
+impl CanInvoke<ACCOUNTS_LEN> for CreateAccount<'_> {
+    fn invoke_via(
+        &self,
+        invoke: impl FnOnce(
+            /* program_id: */ &Pubkey,
+            /* accounts: */ &[&AccountInfo; ACCOUNTS_LEN],
+            /* account_metas: */ &[AccountMeta],
+            /* data: */ &[u8],
+        ) -> ProgramResult,
+    ) -> ProgramResult {
+        let mut instruction_data = [0; 52];
+        instruction_data[4..12].copy_from_slice(&self.lamports.to_le_bytes());
+        instruction_data[12..20].copy_from_slice(&self.space.to_le_bytes());
+        instruction_data[20..52].copy_from_slice(self.owner.as_ref());
+
+        invoke(
+            &crate::ID,
+            &[self.from, self.to],
+            &[
+                AccountMeta::writable_signer(self.from.key()),
+                AccountMeta::writable_signer(self.to.key()),
+            ],
+            &instruction_data,
+        )
     }
 }

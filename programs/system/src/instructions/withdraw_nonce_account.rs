@@ -2,8 +2,11 @@ use pinocchio::{
     account_info::AccountInfo,
     instruction::{AccountMeta, Instruction, Signer},
     program::invoke_signed,
+    pubkey::Pubkey,
     ProgramResult,
 };
+
+use crate::CanInvoke;
 
 /// Withdraw funds from a nonce account.
 ///
@@ -79,6 +82,43 @@ impl WithdrawNonceAccount<'_> {
                 self.authority,
             ],
             signers,
+        )
+    }
+}
+
+const ACCOUNTS_LEN: usize = 5;
+
+impl CanInvoke<ACCOUNTS_LEN> for WithdrawNonceAccount<'_> {
+    fn invoke_via(
+        &self,
+        invoke: impl FnOnce(
+            /* program_id: */ &Pubkey,
+            /* accounts: */ &[&AccountInfo; ACCOUNTS_LEN],
+            /* account_metas: */ &[AccountMeta],
+            /* data: */ &[u8],
+        ) -> ProgramResult,
+    ) -> ProgramResult {
+        let mut instruction_data = [0; 12];
+        instruction_data[0] = 5;
+        instruction_data[4..12].copy_from_slice(&self.lamports.to_le_bytes());
+
+        invoke(
+            &crate::ID,
+            &[
+                self.account,
+                self.recipient,
+                self.recent_blockhashes_sysvar,
+                self.rent_sysvar,
+                self.authority,
+            ],
+            &[
+                AccountMeta::writable(self.account.key()),
+                AccountMeta::writable(self.recipient.key()),
+                AccountMeta::readonly(self.recent_blockhashes_sysvar.key()),
+                AccountMeta::readonly(self.rent_sysvar.key()),
+                AccountMeta::readonly_signer(self.authority.key()),
+            ],
+            &instruction_data,
         )
     }
 }

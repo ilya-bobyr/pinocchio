@@ -2,8 +2,11 @@ use pinocchio::{
     account_info::AccountInfo,
     instruction::{AccountMeta, Instruction, Signer},
     program::invoke_signed,
+    pubkey::Pubkey,
     ProgramResult,
 };
+
+use crate::CanInvoke;
 
 /// One-time idempotent upgrade of legacy nonce versions in order to bump
 /// them out of chain blockhash domain.
@@ -34,5 +37,27 @@ impl UpdateNonceAccount<'_> {
         };
 
         invoke_signed(&instruction, &[self.account], signers)
+    }
+}
+
+const ACCOUNTS_LEN: usize = 1;
+
+impl CanInvoke<ACCOUNTS_LEN> for UpdateNonceAccount<'_> {
+    fn invoke_via(
+        &self,
+        invoke: impl FnOnce(
+            /* program_id: */ &Pubkey,
+            /* accounts: */ &[&AccountInfo; 1],
+            /* account_metas: */ &[AccountMeta],
+            /* data: */ &[u8],
+        ) -> ProgramResult,
+    ) -> ProgramResult {
+        let instruction_data = [12];
+        invoke(
+            &crate::ID,
+            &[self.account],
+            &[AccountMeta::writable(self.account.key())],
+            &instruction_data,
+        )
     }
 }

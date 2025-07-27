@@ -6,6 +6,8 @@ use pinocchio::{
     ProgramResult,
 };
 
+use crate::CanInvoke;
+
 /// Create a new account at an address derived from a base pubkey and a seed.
 ///
 /// ### Accounts:
@@ -84,6 +86,42 @@ impl CreateAccountWithSeed<'_, '_, '_> {
             &instruction,
             &[self.from, self.to, self.base.unwrap_or(self.from)],
             signers,
+        )
+    }
+}
+
+const ACCOUNTS_LEN: usize = 3;
+
+impl CanInvoke<ACCOUNTS_LEN> for CreateAccountWithSeed<'_, '_, '_> {
+    fn invoke_via(
+        &self,
+        invoke: impl FnOnce(
+            /* program_id: */ &Pubkey,
+            /* accounts: */ &[&AccountInfo; ACCOUNTS_LEN],
+            /* account_metas: */ &[AccountMeta],
+            /* data: */ &[u8],
+        ) -> ProgramResult,
+    ) -> ProgramResult {
+        let mut instruction_data = [0; 120];
+        instruction_data[0] = 3;
+        instruction_data[4..36].copy_from_slice(self.base.unwrap_or(self.from).key());
+        instruction_data[36..44].copy_from_slice(&u64::to_le_bytes(self.seed.len() as u64));
+
+        let offset = 44 + self.seed.len();
+        instruction_data[44..offset].copy_from_slice(self.seed.as_bytes());
+        instruction_data[offset..offset + 8].copy_from_slice(&self.lamports.to_le_bytes());
+        instruction_data[offset + 8..offset + 16].copy_from_slice(&self.space.to_le_bytes());
+        instruction_data[offset + 16..offset + 48].copy_from_slice(self.owner.as_ref());
+
+        invoke(
+            &crate::ID,
+            &[self.from, self.to, self.base.unwrap_or(self.from)],
+            &[
+                AccountMeta::writable_signer(self.from.key()),
+                AccountMeta::writable(self.to.key()),
+                AccountMeta::readonly_signer(self.base.unwrap_or(self.from).key()),
+            ],
+            &instruction_data[..offset + 48],
         )
     }
 }

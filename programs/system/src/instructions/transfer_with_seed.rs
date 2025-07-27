@@ -6,6 +6,8 @@ use pinocchio::{
     ProgramResult,
 };
 
+use crate::CanInvoke;
+
 /// Transfer lamports from a derived address.
 ///
 /// ### Accounts:
@@ -73,5 +75,39 @@ impl TransferWithSeed<'_, '_, '_> {
         };
 
         invoke_signed(&instruction, &[self.from, self.base, self.to], signers)
+    }
+}
+
+const ACCOUNTS_LEN: usize = 3;
+
+impl CanInvoke<ACCOUNTS_LEN> for TransferWithSeed<'_, '_, '_> {
+    fn invoke_via(
+        &self,
+        invoke: impl FnOnce(
+            /* program_id: */ &Pubkey,
+            /* accounts: */ &[&AccountInfo; ACCOUNTS_LEN],
+            /* account_metas: */ &[AccountMeta],
+            /* data: */ &[u8],
+        ) -> ProgramResult,
+    ) -> ProgramResult {
+        let mut instruction_data = [0; 80];
+        instruction_data[0] = 11;
+        instruction_data[4..12].copy_from_slice(&self.lamports.to_le_bytes());
+        instruction_data[12..20].copy_from_slice(&u64::to_le_bytes(self.seed.len() as u64));
+
+        let offset = 20 + self.seed.len();
+        instruction_data[20..offset].copy_from_slice(self.seed.as_bytes());
+        instruction_data[offset..offset + 32].copy_from_slice(self.owner.as_ref());
+
+        invoke(
+            &crate::ID,
+            &[self.from, self.base, self.to],
+            &[
+                AccountMeta::writable(self.from.key()),
+                AccountMeta::readonly_signer(self.base.key()),
+                AccountMeta::writable(self.to.key()),
+            ],
+            &instruction_data[..offset + 32],
+        )
     }
 }

@@ -6,6 +6,8 @@ use pinocchio::{
     ProgramResult,
 };
 
+use crate::CanInvoke;
+
 /// Change the entity authorized to execute nonce instructions on the account.
 ///
 /// The `Pubkey` parameter identifies the entity to authorize.
@@ -52,5 +54,33 @@ impl AuthorizeNonceAccount<'_, '_> {
         };
 
         invoke_signed(&instruction, &[self.account, self.authority], signers)
+    }
+}
+
+const ACCOUNTS_LEN: usize = 2;
+
+impl CanInvoke<ACCOUNTS_LEN> for AuthorizeNonceAccount<'_, '_> {
+    fn invoke_via(
+        &self,
+        invoke: impl FnOnce(
+            /* program_id: */ &Pubkey,
+            /* accounts: */ &[&AccountInfo; ACCOUNTS_LEN],
+            /* account_metas: */ &[AccountMeta],
+            /* data: */ &[u8],
+        ) -> ProgramResult,
+    ) -> ProgramResult {
+        let mut instruction_data = [0; 36];
+        instruction_data[0] = 7;
+        instruction_data[4..36].copy_from_slice(self.new_authority);
+
+        invoke(
+            &crate::ID,
+            &[self.account, self.authority],
+            &[
+                AccountMeta::writable(self.account.key()),
+                AccountMeta::readonly_signer(self.authority.key()),
+            ],
+            &instruction_data,
+        )
     }
 }

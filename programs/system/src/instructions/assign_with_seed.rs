@@ -6,6 +6,8 @@ use pinocchio::{
     ProgramResult,
 };
 
+use crate::CanInvoke;
+
 /// Assign account to a program based on a seed.
 ///
 /// ### Accounts:
@@ -65,5 +67,38 @@ impl AssignWithSeed<'_, '_, '_> {
         };
 
         invoke_signed(&instruction, &[self.account, self.base], signers)
+    }
+}
+
+const ACCOUNTS_LEN: usize = 2;
+
+impl CanInvoke<ACCOUNTS_LEN> for AssignWithSeed<'_, '_, '_> {
+    fn invoke_via(
+        &self,
+        invoke: impl FnOnce(
+            /* program_id: */ &Pubkey,
+            /* accounts: */ &[&AccountInfo; ACCOUNTS_LEN],
+            /* account_metas: */ &[AccountMeta],
+            /* data: */ &[u8],
+        ) -> ProgramResult,
+    ) -> ProgramResult {
+        let mut instruction_data = [0; 104];
+        instruction_data[0] = 10;
+        instruction_data[4..36].copy_from_slice(self.base.key());
+        instruction_data[36..44].copy_from_slice(&u64::to_le_bytes(self.seed.len() as u64));
+
+        let offset = 44 + self.seed.len();
+        instruction_data[44..offset].copy_from_slice(self.seed.as_bytes());
+        instruction_data[offset..offset + 32].copy_from_slice(self.owner.as_ref());
+
+        invoke(
+            &crate::ID,
+            &[self.account, self.base],
+            &[
+                AccountMeta::writable(self.account.key()),
+                AccountMeta::readonly_signer(self.base.key()),
+            ],
+            &instruction_data[..offset + 32],
+        )
     }
 }
