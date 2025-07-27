@@ -1,9 +1,5 @@
 use pinocchio::{
-    account_info::AccountInfo,
-    instruction::{AccountMeta, Instruction, Signer},
-    program::invoke_signed,
-    pubkey::Pubkey,
-    ProgramResult,
+    account_info::AccountInfo, instruction::AccountMeta, pubkey::Pubkey, ProgramResult,
 };
 
 use crate::CanInvoke;
@@ -42,50 +38,6 @@ pub struct WithdrawNonceAccount<'a> {
     pub lamports: u64,
 }
 
-impl WithdrawNonceAccount<'_> {
-    #[inline(always)]
-    pub fn invoke(&self) -> ProgramResult {
-        self.invoke_signed(&[])
-    }
-
-    #[inline(always)]
-    pub fn invoke_signed(&self, signers: &[Signer]) -> ProgramResult {
-        // account metadata
-        let account_metas: [AccountMeta; 5] = [
-            AccountMeta::writable(self.account.key()),
-            AccountMeta::writable(self.recipient.key()),
-            AccountMeta::readonly(self.recent_blockhashes_sysvar.key()),
-            AccountMeta::readonly(self.rent_sysvar.key()),
-            AccountMeta::readonly_signer(self.authority.key()),
-        ];
-
-        // instruction data
-        // -  [0..4 ]: instruction discriminator
-        // -  [4..12]: lamports
-        let mut instruction_data = [0; 12];
-        instruction_data[0] = 5;
-        instruction_data[4..12].copy_from_slice(&self.lamports.to_le_bytes());
-
-        let instruction = Instruction {
-            program_id: &crate::ID,
-            accounts: &account_metas,
-            data: &instruction_data,
-        };
-
-        invoke_signed(
-            &instruction,
-            &[
-                self.account,
-                self.recipient,
-                self.recent_blockhashes_sysvar,
-                self.rent_sysvar,
-                self.authority,
-            ],
-            signers,
-        )
-    }
-}
-
 const ACCOUNTS_LEN: usize = 5;
 
 impl CanInvoke<ACCOUNTS_LEN> for WithdrawNonceAccount<'_> {
@@ -98,6 +50,9 @@ impl CanInvoke<ACCOUNTS_LEN> for WithdrawNonceAccount<'_> {
             /* data: */ &[u8],
         ) -> ProgramResult,
     ) -> ProgramResult {
+        // instruction data
+        // -  [0..4 ]: instruction discriminator
+        // -  [4..12]: lamports
         let mut instruction_data = [0; 12];
         instruction_data[0] = 5;
         instruction_data[4..12].copy_from_slice(&self.lamports.to_le_bytes());

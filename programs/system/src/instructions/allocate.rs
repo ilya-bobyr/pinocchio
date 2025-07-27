@@ -1,9 +1,5 @@
 use pinocchio::{
-    account_info::AccountInfo,
-    instruction::{AccountMeta, Instruction, Signer},
-    program::invoke_signed,
-    pubkey::Pubkey,
-    ProgramResult,
+    account_info::AccountInfo, instruction::AccountMeta, pubkey::Pubkey, ProgramResult,
 };
 
 use crate::CanInvoke;
@@ -20,34 +16,6 @@ pub struct Allocate<'a> {
     pub space: u64,
 }
 
-impl Allocate<'_> {
-    #[inline(always)]
-    pub fn invoke(&self) -> ProgramResult {
-        self.invoke_signed(&[])
-    }
-
-    #[inline(always)]
-    pub fn invoke_signed(&self, signers: &[Signer]) -> ProgramResult {
-        // account metadata
-        let account_metas: [AccountMeta; 1] = [AccountMeta::writable_signer(self.account.key())];
-
-        // instruction data
-        // -  [0..4 ]: instruction discriminator
-        // -  [4..12]: space
-        let mut instruction_data = [0; 12];
-        instruction_data[0] = 8;
-        instruction_data[4..12].copy_from_slice(&self.space.to_le_bytes());
-
-        let instruction = Instruction {
-            program_id: &crate::ID,
-            accounts: &account_metas,
-            data: &instruction_data,
-        };
-
-        invoke_signed(&instruction, &[self.account], signers)
-    }
-}
-
 const ACCOUNTS_LEN: usize = 1;
 
 impl CanInvoke<ACCOUNTS_LEN> for Allocate<'_> {
@@ -60,6 +28,9 @@ impl CanInvoke<ACCOUNTS_LEN> for Allocate<'_> {
             /* data: */ &[u8],
         ) -> ProgramResult,
     ) -> ProgramResult {
+        // instruction data
+        // -  [0..4 ]: instruction discriminator
+        // -  [4..12]: space
         let mut instruction_data = [0; 12];
         instruction_data[0] = 8;
         instruction_data[4..12].copy_from_slice(&self.space.to_le_bytes());

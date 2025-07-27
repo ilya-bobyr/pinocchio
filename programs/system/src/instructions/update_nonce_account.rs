@@ -1,9 +1,5 @@
 use pinocchio::{
-    account_info::AccountInfo,
-    instruction::{AccountMeta, Instruction, Signer},
-    program::invoke_signed,
-    pubkey::Pubkey,
-    ProgramResult,
+    account_info::AccountInfo, instruction::AccountMeta, pubkey::Pubkey, ProgramResult,
 };
 
 use crate::CanInvoke;
@@ -18,28 +14,6 @@ pub struct UpdateNonceAccount<'a> {
     pub account: &'a AccountInfo,
 }
 
-impl UpdateNonceAccount<'_> {
-    #[inline(always)]
-    pub fn invoke(&self) -> ProgramResult {
-        self.invoke_signed(&[])
-    }
-
-    #[inline(always)]
-    pub fn invoke_signed(&self, signers: &[Signer]) -> ProgramResult {
-        // account metadata
-        let account_metas: [AccountMeta; 1] = [AccountMeta::writable(self.account.key())];
-
-        // instruction
-        let instruction = Instruction {
-            program_id: &crate::ID,
-            accounts: &account_metas,
-            data: &[12],
-        };
-
-        invoke_signed(&instruction, &[self.account], signers)
-    }
-}
-
 const ACCOUNTS_LEN: usize = 1;
 
 impl CanInvoke<ACCOUNTS_LEN> for UpdateNonceAccount<'_> {
@@ -52,12 +26,11 @@ impl CanInvoke<ACCOUNTS_LEN> for UpdateNonceAccount<'_> {
             /* data: */ &[u8],
         ) -> ProgramResult,
     ) -> ProgramResult {
-        let instruction_data = [12];
         invoke(
             &crate::ID,
             &[self.account],
             &[AccountMeta::writable(self.account.key())],
-            &instruction_data,
+            &[12],
         )
     }
 }
