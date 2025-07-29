@@ -1,0 +1,6 @@
+error: Unexpected argument name.
+       Known argument names: pinocchio_crate, instruction_type, program_id
+ --> tests/entrypoint/fail/invalid_argument_name.rs:4:5
+  |
+4 |     instruction: Instruction,
+  |     ^^^^^^^^^^^

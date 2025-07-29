@@ -223,9 +223,12 @@
 #[cfg(feature = "std")]
 extern crate std;
 
+pub mod account;
+
 pub mod account_info;
 pub mod cpi;
 pub mod entrypoint;
+pub mod entrypoint_v2;
 pub mod instruction;
 pub mod log;
 pub mod memory;

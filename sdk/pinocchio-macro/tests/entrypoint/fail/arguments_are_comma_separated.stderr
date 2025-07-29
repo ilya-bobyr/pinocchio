@@ -1,0 +1,5 @@
+error: expected `=>`.  Note: the macro arguments are separated with a `,`, not `;`.
+ --> tests/entrypoint/fail/arguments_are_comma_separated.rs:5:15
+  |
+5 |     program_id: program_id;
+  |               ^

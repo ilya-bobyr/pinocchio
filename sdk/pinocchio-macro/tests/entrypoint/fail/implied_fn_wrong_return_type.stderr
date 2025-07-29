@@ -1,0 +1,21 @@
+error[E0308]: mismatched types
+  --> tests/entrypoint/fail/implied_fn_wrong_return_type.rs:28:5
+   |
+24 | / entrypoint! {
+25 | |     instruction_type: Instruction,
+26 | |     program_id: program_id;
+27 | |
+28 | |     Instruction::NewUser => |
+   | |     ^^^^^^^^^^^^^^^^^^^^ expected `Result<(), ProgramError>`, found `()`
+...  |
+31 | |     |,
+32 | | }
+   | |_- expected `Result<(), ProgramError>` because of return type
+   |
+   = note:   expected enum `Result<(), ProgramError>`
+           found unit type `()`
+help: try adding an expression at the end of the block
+   |
+28 ~     Instruction::NewUser;
+29 ~     Ok(()) => |
+   |

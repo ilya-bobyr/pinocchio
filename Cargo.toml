@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+  "examples/entrypoint-user-registry",
   "programs/associated-token-account",
   "programs/memo",
   "programs/system",
@@ -9,6 +10,7 @@ members = [
   "sdk/log/crate",
   "sdk/log/macro",
   "sdk/pinocchio",
+  "sdk/pinocchio-macro",
   "sdk/pubkey",
 ]
 
@@ -20,13 +22,21 @@ license = "Apache-2.0"
 
 [workspace.dependencies]
 five8_const = "0.1.4"
+heck = "0.5.0"
+paste = "1.0.15"
 pinocchio = { path = "sdk/pinocchio", version = "0.10" }
 pinocchio-log-macro = { path = "sdk/log/macro", version = "0.5" }
+pinocchio-macro = { path = "sdk/pinocchio-macro", version = "0.3" }
 pinocchio-pubkey = { path = "sdk/pubkey", version = "0.3" }
-quote = "1.0"
+proc-macro-crate = "3.4.0"
+proc-macro-error = "1.0.4"
+proc-macro2 = "1.0.95"
+quote = "1.0.40"
 regex = "1"
 solana-address = "1.0.0"
-syn = "1.0"
+static_assertions = "1.1.0"
+syn = "2.0.104"
+trybuild = "1.0.110"
 
 [workspace.metadata.cli]
 solana = "2.2.0"

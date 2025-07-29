@@ -5,6 +5,8 @@ use core::{mem::transmute, ptr::read_unaligned};
 use crate::{log, program_error::ProgramError};
 #[cfg(feature = "solana-address")]
 use solana_address::Address;
+#[cfg(all(feature = "test-utils", not(target_os = "solana")))]
+use std::{array, cell::Cell, thread_local};
 
 /// Number of bytes in a pubkey.
 pub const PUBKEY_BYTES: usize = 32;
@@ -30,6 +32,46 @@ pub struct Pubkey(pub [u8; PUBKEY_BYTES]);
 impl Pubkey {
     pub const fn from_bytes(bytes: [u8; PUBKEY_BYTES]) -> Self {
         Self(bytes)
+    }
+
+    /// Constructs a `Pubkey` value that consists of all zeroes, except that the last 8 bytes hold a
+    /// value of an ever increasing thread local counter.
+    ///
+    /// This should be good enough for unit tests, as they normally run in a single thread.
+    /// But if you need something that unique across all threads
+    #[cfg(all(feature = "test-utils", not(target_os = "solana")))]
+    pub fn new_tl_unique() -> Self {
+        thread_local! {
+            static COUNTER: Cell<u64> = const { Cell::new(1) };
+        }
+
+        let id = COUNTER.get();
+        COUNTER.set(id.wrapping_add(1));
+        let id = id.to_le_bytes();
+
+        let data = array::from_fn(|i| if i < size_of::<u64>() { id[i] } else { 0 });
+
+        Self(data)
+    }
+
+    /// Constructs a `Pubkey` that consists of a 1 in byte 32, followed by zeros, followed by 8
+    /// bytes that hold the specified `id`.  Useful when you want to have a pubkey that has known
+    /// fixed identity, unlike those produced by [`new_tl_unique()`].
+    #[cfg(all(feature = "test-utils", not(target_os = "solana")))]
+    pub fn new_for_test_with_id(id: u64) -> Self {
+        let id = id.to_le_bytes();
+
+        let data = array::from_fn(|i| {
+            if i < size_of::<u64>() {
+                id[i]
+            } else if i < 31 {
+                0
+            } else {
+                1
+            }
+        });
+
+        Self(data)
     }
 
     pub const fn as_bytes(&self) -> &[u8; PUBKEY_BYTES] {

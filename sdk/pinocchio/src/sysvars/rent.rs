@@ -4,6 +4,7 @@
 
 use super::Sysvar;
 use crate::{
+    account::SysvarAccountContent,
     account_info::{AccountInfo, Ref},
     hint::unlikely,
     impl_sysvar_get,
@@ -230,6 +231,10 @@ impl Rent {
 
 impl Sysvar for Rent {
     impl_sysvar_get!(sol_get_rent_sysvar);
+}
+
+impl SysvarAccountContent for Rent {
+    const EXPECTED_ADDRESS: Pubkey = RENT_ID;
 }
 
 /// The return value of [`Rent::due`].

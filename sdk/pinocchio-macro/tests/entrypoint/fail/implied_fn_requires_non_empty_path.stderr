@@ -1,0 +1,5 @@
+error: An implied instruction function call is only supported when the instruction match expression is a path.  For example, `Instruction::MintToken`.
+ --> tests/entrypoint/fail/implied_fn_requires_non_empty_path.rs:7:5
+  |
+7 |     17 => |metadata: Pin<&mut Account<T>>; name: &str|,
+  |     ^^

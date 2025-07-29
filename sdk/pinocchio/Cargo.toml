@@ -13,6 +13,7 @@ crate-type = ["rlib"]
 
 [dependencies]
 solana-address = { workspace = true, optional = true }
+static_assertions = { workspace = true }
 
 [dev-dependencies]
 five8_const = { workspace = true }
@@ -20,6 +21,7 @@ five8_const = { workspace = true }
 [features]
 solana-address = ["dep:solana-address"]
 std = []
+test-utils = ["std"]
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = [
