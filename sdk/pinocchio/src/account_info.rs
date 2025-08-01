@@ -41,7 +41,7 @@ pub enum BorrowState {
 /// to the data.
 #[repr(C)]
 #[derive(Clone, Copy, Default)]
-pub(crate) struct Account {
+pub struct Account {
     /// Borrow state for lamports and account data.
     ///
     /// This reuses the memory reserved for the duplicate flag in the
@@ -117,7 +117,7 @@ pub struct AccountInfo {
     /// Raw (pointer to) account data.
     ///
     /// Note that this is a pointer can be shared across multiple `AccountInfo`.
-    pub(crate) raw: *mut Account,
+    pub raw: *mut Account,
 }
 
 impl AccountInfo {
