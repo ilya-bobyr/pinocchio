@@ -65,7 +65,7 @@ impl SetAuthority<'_> {
         if let Some(new_authority) = self.new_authority {
             // Set new_authority as [u8; 32] at offset [2..35]
             write_bytes(&mut instruction_data[2..3], &[1]);
-            write_bytes(&mut instruction_data[3..], new_authority);
+            write_bytes(&mut instruction_data[3..], new_authority.as_bytes());
         } else {
             write_bytes(&mut instruction_data[2..3], &[0]);
             // Adjust length if no new authority

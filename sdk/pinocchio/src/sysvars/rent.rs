@@ -12,10 +12,10 @@ use crate::{
 };
 
 /// The ID of the rent sysvar.
-pub const RENT_ID: Pubkey = [
+pub const RENT_ID: Pubkey = Pubkey::from_bytes([
     6, 167, 213, 23, 25, 44, 92, 81, 33, 140, 201, 76, 61, 74, 241, 127, 88, 218, 238, 8, 155, 161,
     253, 68, 227, 219, 217, 138, 0, 0, 0, 0,
-];
+]);
 
 /// Default rental rate in lamports/byte-year.
 ///

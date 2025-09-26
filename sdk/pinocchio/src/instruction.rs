@@ -2,7 +2,10 @@
 
 use core::{marker::PhantomData, ops::Deref};
 
-use crate::{account_info::AccountInfo, pubkey::Pubkey};
+use crate::{
+    account_info::AccountInfo,
+    pubkey::{Pubkey, PUBKEY_BYTES},
+};
 
 /// Information about a CPI instruction.
 #[derive(Debug, Clone)]
@@ -216,6 +219,16 @@ impl<'a, const SIZE: usize> From<&'a [u8; SIZE]> for Seed<'a> {
         Self {
             seed: value.as_ptr(),
             len: value.len() as u64,
+            _bytes: PhantomData::<&[u8]>,
+        }
+    }
+}
+
+impl<'a> From<&'a Pubkey> for Seed<'a> {
+    fn from(pubkey: &'a Pubkey) -> Self {
+        Self {
+            seed: pubkey.as_bytes().as_ptr(),
+            len: PUBKEY_BYTES as u64,
             _bytes: PhantomData::<&[u8]>,
         }
     }

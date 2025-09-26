@@ -41,7 +41,7 @@ impl InitializeAccount3<'_> {
         // Set discriminator as u8 at offset [0]
         write_bytes(&mut instruction_data, &[18]);
         // Set owner as [u8; 32] at offset [1..33]
-        write_bytes(&mut instruction_data[1..], self.owner);
+        write_bytes(&mut instruction_data[1..], self.owner.as_bytes());
 
         let instruction = Instruction {
             program_id: &crate::ID,

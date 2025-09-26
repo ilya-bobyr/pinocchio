@@ -11,10 +11,14 @@ license = { workspace = true }
 [lib]
 crate-type = ["rlib"]
 
+[dependencies]
+solana-address = { workspace = true, optional = true }
+
 [dev-dependencies]
 five8_const = { workspace = true }
 
 [features]
+solana-address = ["dep:solana-address"]
 std = []
 
 [lints.rust]

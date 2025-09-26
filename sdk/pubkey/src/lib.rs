@@ -74,7 +74,7 @@ pub fn derive_address<const N: usize>(
             data.get_unchecked_mut(i).write(&bump_seed);
             i += 1;
         }
-        data.get_unchecked_mut(i).write(program_id.as_ref());
+        data.get_unchecked_mut(i).write(program_id.as_bytes());
         data.get_unchecked_mut(i + 1).write(PDA_MARKER.as_ref());
     }
 
@@ -142,15 +142,20 @@ pub const fn derive_address_const<const N: usize>(
 
     // TODO: replace this with `is_some` when the MSRV is upgraded
     // to `1.84.0+`.
-    if let Some(bump) = bump {
+    let bytes = if let Some(bump) = bump {
         hasher
             .update(&[bump])
-            .update(program_id)
+            .update(program_id.as_bytes())
             .update(PDA_MARKER)
             .finalize()
     } else {
-        hasher.update(program_id).update(PDA_MARKER).finalize()
-    }
+        hasher
+            .update(program_id.as_bytes())
+            .update(PDA_MARKER)
+            .finalize()
+    };
+
+    Pubkey::from_bytes(bytes)
 }
 
 /// Convenience macro to define a static `Pubkey` value.
@@ -191,5 +196,5 @@ macro_rules! declare_id {
 #[cfg(feature = "const")]
 #[inline(always)]
 pub const fn from_str(value: &str) -> Pubkey {
-    decode_32_const(value)
+    Pubkey::from_bytes(decode_32_const(value))
 }

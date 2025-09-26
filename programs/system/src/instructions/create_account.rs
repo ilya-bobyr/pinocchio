@@ -73,7 +73,7 @@ impl<'a> CreateAccount<'a> {
         // create account instruction has a '0' discriminator
         instruction_data[4..12].copy_from_slice(&self.lamports.to_le_bytes());
         instruction_data[12..20].copy_from_slice(&self.space.to_le_bytes());
-        instruction_data[20..52].copy_from_slice(self.owner.as_ref());
+        instruction_data[20..52].copy_from_slice(self.owner.as_bytes());
 
         let instruction = Instruction {
             program_id: &crate::ID,

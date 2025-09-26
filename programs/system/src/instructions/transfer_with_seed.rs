@@ -64,7 +64,7 @@ impl TransferWithSeed<'_, '_, '_> {
 
         let offset = 20 + self.seed.len();
         instruction_data[20..offset].copy_from_slice(self.seed.as_bytes());
-        instruction_data[offset..offset + 32].copy_from_slice(self.owner.as_ref());
+        instruction_data[offset..offset + 32].copy_from_slice(self.owner.as_bytes());
 
         let instruction = Instruction {
             program_id: &crate::ID,

@@ -51,12 +51,12 @@ impl AssignWithSeed<'_, '_, '_> {
         // - [.. +32]: owner pubkey
         let mut instruction_data = [0; 104];
         instruction_data[0] = 10;
-        instruction_data[4..36].copy_from_slice(self.base.key());
+        instruction_data[4..36].copy_from_slice(self.base.key().as_bytes());
         instruction_data[36..44].copy_from_slice(&u64::to_le_bytes(self.seed.len() as u64));
 
         let offset = 44 + self.seed.len();
         instruction_data[44..offset].copy_from_slice(self.seed.as_bytes());
-        instruction_data[offset..offset + 32].copy_from_slice(self.owner.as_ref());
+        instruction_data[offset..offset + 32].copy_from_slice(self.owner.as_bytes());
 
         let instruction = Instruction {
             program_id: &crate::ID,

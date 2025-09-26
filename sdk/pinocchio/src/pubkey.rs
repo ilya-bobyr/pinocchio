@@ -1,8 +1,10 @@
 //! Public key type and functions.
 
-use core::ptr::read_unaligned;
+use core::{mem::transmute, ptr::read_unaligned};
 
 use crate::program_error::ProgramError;
+#[cfg(feature = "solana-address")]
+use solana_address::Address;
 
 /// Number of bytes in a pubkey.
 pub const PUBKEY_BYTES: usize = 32;
@@ -21,14 +23,140 @@ pub const PDA_MARKER: &[u8; 21] = b"ProgramDerivedAddress";
 /// The address of a [Solana account][account].
 ///
 /// [account]: https://solana.com/docs/core/accounts
-pub type Pubkey = [u8; PUBKEY_BYTES];
+#[derive(Copy, Clone, Debug, Default, Eq)]
+#[repr(transparent)]
+pub struct Pubkey(pub [u8; PUBKEY_BYTES]);
+
+impl Pubkey {
+    pub const fn from_bytes(bytes: [u8; PUBKEY_BYTES]) -> Self {
+        Self(bytes)
+    }
+
+    pub const fn as_bytes(&self) -> &[u8; PUBKEY_BYTES] {
+        &self.0
+    }
+
+    pub const fn as_bytes_mut(&mut self) -> &mut [u8; PUBKEY_BYTES] {
+        &mut self.0
+    }
+}
+
+impl PartialEq for Pubkey {
+    fn eq(&self, other: &Self) -> bool {
+        let p1_ptr = self.0.as_ptr() as *const u64;
+        let p2_ptr = other.0.as_ptr() as *const u64;
+
+        unsafe {
+            read_unaligned(p1_ptr) == read_unaligned(p2_ptr)
+                && read_unaligned(p1_ptr.add(1)) == read_unaligned(p2_ptr.add(1))
+                && read_unaligned(p1_ptr.add(2)) == read_unaligned(p2_ptr.add(2))
+                && read_unaligned(p1_ptr.add(3)) == read_unaligned(p2_ptr.add(3))
+        }
+    }
+}
+
+impl From<[u8; PUBKEY_BYTES]> for Pubkey {
+    fn from(bytes: [u8; PUBKEY_BYTES]) -> Self {
+        Self(bytes)
+    }
+}
+
+impl From<Pubkey> for [u8; PUBKEY_BYTES] {
+    fn from(Pubkey(bytes): Pubkey) -> Self {
+        bytes
+    }
+}
+
+impl From<&[u8; PUBKEY_BYTES]> for &Pubkey {
+    fn from(bytes: &[u8; PUBKEY_BYTES]) -> Self {
+        // SAFETY: `Pubkey` is `#[repr(transparent)]` holding a `[u8; PUBKEY_BYTES]`.
+        // So it should be safe to cast it like this.
+        // https://doc.rust-lang.org/nomicon/other-reprs.html#reprtransparent
+        //
+        // TODO Use `TransmuteFrom::transmute()` for safety when it is stabilized:
+        // https://doc.rust-lang.org/std/mem/trait.TransmuteFrom.html
+        // https://github.com/rust-lang/rust/issues/99571
+        unsafe { transmute(bytes) }
+    }
+}
+
+impl<'bytes> From<&'bytes Pubkey> for &'bytes [u8; PUBKEY_BYTES] {
+    fn from(Pubkey(bytes): &'bytes Pubkey) -> Self {
+        bytes
+    }
+}
+
+impl From<&mut [u8; PUBKEY_BYTES]> for &mut Pubkey {
+    fn from(bytes: &mut [u8; PUBKEY_BYTES]) -> Self {
+        // SAFETY: `Pubkey` is `#[repr(transparent)]` holding a `[u8; PUBKEY_BYTES]`.
+        // So it should be safe to cast it like this.
+        // https://doc.rust-lang.org/nomicon/other-reprs.html#reprtransparent
+        //
+        // TODO Use `TransmuteFrom::transmute()` for safety when it is stabilized:
+        // https://doc.rust-lang.org/std/mem/trait.TransmuteFrom.html
+        // https://github.com/rust-lang/rust/issues/99571
+        unsafe { transmute(bytes) }
+    }
+}
+
+impl<'bytes> From<&'bytes mut Pubkey> for &'bytes mut [u8; PUBKEY_BYTES] {
+    fn from(Pubkey(bytes): &'bytes mut Pubkey) -> Self {
+        bytes
+    }
+}
+
+#[cfg(feature = "solana-address")]
+impl From<Address> for Pubkey {
+    fn from(address: Address) -> Self {
+        Self::from_bytes(address.to_bytes())
+    }
+}
+
+#[cfg(feature = "solana-address")]
+impl From<&Address> for &Pubkey {
+    fn from(address: &Address) -> Self {
+        // SAFETY: `Pubkey` is `#[repr(transparent)]` holding a `[u8; PUBKEY_BYTES]`.
+        // And `Address` is `#[repr(transparent)]` holding a `[u8: 32]`.
+        // So it should be safe to cast it like this.
+        // https://doc.rust-lang.org/nomicon/other-reprs.html#reprtransparent
+        //
+        // TODO Use `TransmuteFrom::transmute()` for safety when it is stabilized:
+        // https://doc.rust-lang.org/std/mem/trait.TransmuteFrom.html
+        // https://github.com/rust-lang/rust/issues/99571
+        debug_assert!(PUBKEY_BYTES == 32);
+        unsafe { transmute(address.as_array()) }
+    }
+}
+
+#[cfg(feature = "solana-address")]
+impl From<Pubkey> for Address {
+    fn from(Pubkey(bytes): Pubkey) -> Self {
+        bytes.into()
+    }
+}
+
+#[cfg(feature = "solana-address")]
+impl From<&Pubkey> for &Address {
+    fn from(pubkey: &Pubkey) -> Self {
+        // SAFETY: `Address` is `#[repr(transparent)]` holding a `[u8; PUBKEY_BYTES]`.
+        // And `Address` is `#[repr(transparent)]` holding a `[u8: 32]`.
+        // So it should be safe to cast it like this.
+        // https://doc.rust-lang.org/nomicon/other-reprs.html#reprtransparent
+        //
+        // TODO Use `TransmuteFrom::transmute()` for safety when it is stabilized:
+        // https://doc.rust-lang.org/std/mem/trait.TransmuteFrom.html
+        // https://github.com/rust-lang/rust/issues/99571
+        debug_assert!(PUBKEY_BYTES == 32);
+        unsafe { transmute(pubkey) }
+    }
+}
 
 /// Log a `Pubkey` from a program.
 #[inline(always)]
 pub fn log(pubkey: &Pubkey) {
     #[cfg(target_os = "solana")]
     unsafe {
-        crate::syscalls::sol_log_pubkey(pubkey as *const _ as *const u8)
+        crate::syscalls::sol_log_pubkey(pubkey.as_bytes() as *const u8)
     };
 
     #[cfg(not(target_os = "solana"))]
@@ -42,8 +170,8 @@ pub fn log(pubkey: &Pubkey) {
 /// byte-by-byte.
 #[inline(always)]
 pub const fn pubkey_eq(p1: &Pubkey, p2: &Pubkey) -> bool {
-    let p1_ptr = p1.as_ptr() as *const u64;
-    let p2_ptr = p2.as_ptr() as *const u64;
+    let p1_ptr = p1.0.as_ptr() as *const u64;
+    let p2_ptr = p2.0.as_ptr() as *const u64;
 
     unsafe {
         read_unaligned(p1_ptr) == read_unaligned(p2_ptr)
@@ -152,14 +280,17 @@ pub fn try_find_program_address(seeds: &[&[u8]], program_id: &Pubkey) -> Option<
             crate::syscalls::sol_try_find_program_address(
                 seeds as *const _ as *const u8,
                 seeds.len() as u64,
-                program_id as *const _,
+                program_id.as_bytes() as *const _,
                 bytes.as_mut_ptr() as *mut _,
                 &mut bump_seed as *mut _,
             )
         };
         match result {
             // SAFETY: The syscall has initialized the bytes.
-            crate::SUCCESS => Some((unsafe { bytes.assume_init() }, bump_seed)),
+            crate::SUCCESS => Some((
+                Pubkey::from_bytes(unsafe { bytes.assume_init() }),
+                bump_seed,
+            )),
             _ => None,
         }
     }
@@ -205,14 +336,14 @@ pub fn create_program_address(
             crate::syscalls::sol_create_program_address(
                 seeds as *const _ as *const u8,
                 seeds.len() as u64,
-                program_id as *const _ as *const u8,
+                program_id.as_bytes() as *const u8,
                 bytes.as_mut_ptr() as *mut u8,
             )
         };
 
         match result {
             // SAFETY: The syscall has initialized the bytes.
-            crate::SUCCESS => Ok(unsafe { bytes.assume_init() }),
+            crate::SUCCESS => Ok(Pubkey::from_bytes(unsafe { bytes.assume_init() })),
             _ => Err(result.into()),
         }
     }
@@ -269,7 +400,7 @@ pub fn create_with_seed(
         return Err(ProgramError::MaxSeedLengthExceeded);
     }
 
-    if program_id.ends_with(PDA_MARKER) {
+    if program_id.0.ends_with(PDA_MARKER) {
         return Err(ProgramError::IllegalOwner);
     }
 
@@ -277,7 +408,7 @@ pub fn create_with_seed(
     {
         let mut bytes = core::mem::MaybeUninit::<[u8; PUBKEY_BYTES]>::uninit();
 
-        let vals = &[base, seed, program_id];
+        let vals: &[&[u8]] = &[base.as_bytes(), seed, program_id.as_bytes()];
 
         unsafe {
             crate::syscalls::sol_sha256(
@@ -288,7 +419,7 @@ pub fn create_with_seed(
         }
 
         // SAFETY: The syscall has initialized the bytes.
-        Ok(unsafe { bytes.assume_init() })
+        Ok(Pubkey::from_bytes(unsafe { bytes.assume_init() }))
     }
 
     #[cfg(not(target_os = "solana"))]
@@ -305,15 +436,15 @@ mod tests {
     #[test]
     fn test_pubkey_eq_matches_default_eq() {
         for i in 0..u8::MAX {
-            let p1: Pubkey = [i; PUBKEY_BYTES];
-            let p2: Pubkey = [i; PUBKEY_BYTES];
+            let p1 = Pubkey::from_bytes([i; PUBKEY_BYTES]);
+            let p2 = Pubkey::from_bytes([i; PUBKEY_BYTES]);
 
             assert_eq!(pubkey_eq(&p1, &p2), p1 == p2);
         }
 
         for i in 0..u8::MAX {
-            let p1: Pubkey = [i; PUBKEY_BYTES];
-            let p2: Pubkey = [u8::MAX - i; PUBKEY_BYTES];
+            let p1 = Pubkey::from_bytes([i; PUBKEY_BYTES]);
+            let p2 = Pubkey::from_bytes([u8::MAX - i; PUBKEY_BYTES]);
 
             assert_eq!(!pubkey_eq(&p1, &p2), p1 != p2);
         }

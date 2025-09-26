@@ -34,7 +34,7 @@ impl Assign<'_, '_> {
         // -  [4..36]: owner pubkey
         let mut instruction_data = [0; 36];
         instruction_data[0] = 1;
-        instruction_data[4..36].copy_from_slice(self.owner.as_ref());
+        instruction_data[4..36].copy_from_slice(self.owner.as_bytes());
 
         let instruction = Instruction {
             program_id: &crate::ID,

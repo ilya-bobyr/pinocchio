@@ -685,7 +685,7 @@ mod tests {
     use super::*;
 
     /// The mock program ID used for testing.
-    const MOCK_PROGRAM_ID: Pubkey = [5u8; 32];
+    const MOCK_PROGRAM_ID: Pubkey = Pubkey::from_bytes([5u8; 32]);
 
     /// An uninitialized account info.
     const UNINIT: MaybeUninit<AccountInfo> = MaybeUninit::<AccountInfo>::uninit();
@@ -768,7 +768,7 @@ mod tests {
         input.write(instruction_data, offset);
         offset += instruction_data.len();
         // Program ID (mock).
-        input.write(&MOCK_PROGRAM_ID, offset);
+        input.write(&MOCK_PROGRAM_ID.0, offset);
 
         input
     }
@@ -831,7 +831,7 @@ mod tests {
         input.write(instruction_data, offset);
         offset += instruction_data.len();
         // Program ID (mock).
-        input.write(&MOCK_PROGRAM_ID, offset);
+        input.write(&MOCK_PROGRAM_ID.0, offset);
 
         input
     }

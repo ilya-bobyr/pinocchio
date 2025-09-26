@@ -25,6 +25,7 @@ pinocchio-log-macro = { path = "sdk/log/macro", version = "0.5" }
 pinocchio-pubkey = { path = "sdk/pubkey", version = "0.3" }
 quote = "1.0"
 regex = "1"
+solana-address = "1.0.0"
 syn = "1.0"
 
 [workspace.metadata.cli]
