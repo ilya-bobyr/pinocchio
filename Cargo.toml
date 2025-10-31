@@ -20,7 +20,7 @@ license = "Apache-2.0"
 
 [workspace.dependencies]
 five8_const = "0.1.4"
-pinocchio = { path = "sdk/pinocchio", version = "0.9" }
+pinocchio = { path = "sdk/pinocchio", version = "0.10" }
 pinocchio-log-macro = { path = "sdk/log/macro", version = "0.5" }
 pinocchio-pubkey = { path = "sdk/pubkey", version = "0.3" }
 quote = "1.0"
