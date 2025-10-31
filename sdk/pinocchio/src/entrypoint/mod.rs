@@ -5,7 +5,6 @@ pub mod lazy;
 
 pub use lazy::{InstructionContext, MaybeAccount};
 
-#[cfg(not(feature = "std"))]
 use core::alloc::{GlobalAlloc, Layout};
 
 #[cfg(target_os = "solana")]
@@ -481,7 +480,6 @@ macro_rules! default_panic_handler {
 /// the panic occurred and then calls the syscall `abort()`.
 ///
 /// This macro can only be used when all crates are `no_std` and the `"std"` feature is disabled.
-#[cfg(not(feature = "std"))]
 #[macro_export]
 macro_rules! nostd_panic_handler {
     () => {
@@ -541,17 +539,6 @@ macro_rules! default_allocator {
     };
 }
 
-/// A global allocator that does not allocate memory.
-///
-/// Using this macro with the `"std"` feature enabled will result in a compile error.
-#[cfg(feature = "std")]
-#[macro_export]
-macro_rules! no_allocator {
-    () => {
-        compile_error!("Feature 'std' cannot be enabled.");
-    };
-}
-
 /// A global allocator that does not dynamically allocate memory.
 ///
 /// This macro sets up a global allocator that denies all dynamic allocations, while allowing static
@@ -561,7 +548,6 @@ macro_rules! no_allocator {
 /// The program will panic if it tries to dynamically allocate memory.
 ///
 /// This is used when the `"std"` feature is disabled.
-#[cfg(not(feature = "std"))]
 #[macro_export]
 macro_rules! no_allocator {
     () => {
@@ -670,12 +656,10 @@ mod alloc {
     }
 }
 
-#[cfg(not(feature = "std"))]
 /// An allocator that does not allocate memory.
 #[derive(Clone, Copy, Debug)]
 pub struct NoAllocator;
 
-#[cfg(not(feature = "std"))]
 unsafe impl GlobalAlloc for NoAllocator {
     #[inline]
     unsafe fn alloc(&self, _: Layout) -> *mut u8 {
