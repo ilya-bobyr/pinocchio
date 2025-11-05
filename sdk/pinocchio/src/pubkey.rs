@@ -2,7 +2,7 @@
 
 use core::{mem::transmute, ptr::read_unaligned};
 
-use crate::program_error::ProgramError;
+use crate::{log, program_error::ProgramError};
 #[cfg(feature = "solana-address")]
 use solana_address::Address;
 
@@ -38,6 +38,16 @@ impl Pubkey {
 
     pub const fn as_bytes_mut(&mut self) -> &mut [u8; PUBKEY_BYTES] {
         &mut self.0
+    }
+
+    pub fn log(&self) {
+        log::sol_log_64(
+            u64::from_be_bytes(self.0[0..8].try_into().unwrap()),
+            u64::from_be_bytes(self.0[8..16].try_into().unwrap()),
+            u64::from_be_bytes(self.0[16..24].try_into().unwrap()),
+            u64::from_be_bytes(self.0[24..32].try_into().unwrap()),
+            0,
+        );
     }
 }
 
