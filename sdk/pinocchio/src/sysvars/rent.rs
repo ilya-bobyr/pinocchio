@@ -65,7 +65,7 @@ pub const DEFAULT_BURN_PERCENT: u8 = 50;
 pub const ACCOUNT_STORAGE_OVERHEAD: u64 = 128;
 
 /// Rent sysvar data
-#[repr(C)]
+#[repr(C, packed(1))]
 #[derive(Clone, Copy, Debug)]
 pub struct Rent {
     /// Rental rate in lamports per byte-year
